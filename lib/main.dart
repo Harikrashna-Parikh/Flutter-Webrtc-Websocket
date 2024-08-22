@@ -85,19 +85,22 @@ class _HomePageState extends State<HomePage> {
       peerServiceInstance.peer?.addTrack(track, stream);
     });
 
+
     // Set  up the remote stream renderer
     peerServiceInstance.peer?.onTrack = (RTCTrackEvent event) async {
       if (event.streams.isNotEmpty) {
         await _remoteRenderer.initialize();
-        setState(() {
           _remoteRenderer.srcObject = event.streams[0];
-        });
+          setState(() {
+
+          });
+
       }
     };
   }
 
   void connectSocket() async {
-    final url = Uri.parse('ws://192.168.1.14:8082/api/videochat/ad6bd04f-7656-4b46-9936-dc0583a11d57');
+    final url = Uri.parse('ws://192.168.1.14:8082/api/videochat/95d5edb9-7c93-48c7-80ca-92915cf9b882');
     channel = WebSocketChannel.connect(url);
 
     channel.stream.listen((message) {
@@ -174,8 +177,12 @@ class _HomePageState extends State<HomePage> {
               ),
             ],
           ),
-          Expanded(child: RTCVideoView(_localRenderer)),
-          Expanded(child: RTCVideoView(_remoteRenderer))
+          Expanded(child: RTCVideoView(
+            key: const Key("local"),
+              _localRenderer)),
+          Expanded(child: RTCVideoView(
+              key: const Key("remote"),
+              _remoteRenderer))
         ],
       ),
     );
