@@ -3,6 +3,8 @@ import 'package:flutter_webrtc/flutter_webrtc.dart';
 class PeerService {
   RTCPeerConnection? peer;
   RTCIceCandidate? localIceCandidate;
+  // StreamStateCallback? onAddRemoteStream;
+
 
   PeerService() {
     initializePeer();
@@ -33,6 +35,9 @@ class PeerService {
 
       peer!.onTrack = (RTCTrackEvent event) {
         print('Track Event: ${event.track}');
+      };
+      peer!.onAddStream = (MediaStream stream) {
+        print("Add remote stream");
       };
     }
   }

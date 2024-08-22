@@ -75,8 +75,9 @@ class _HomePageState extends State<HomePage> {
     });
 
     // Set the local renderer's stream once it is initialized
+    _localRenderer.srcObject = stream;
     setState(() {
-      _localRenderer.srcObject = stream;
+
     });
 
     // Add tracks from the stream to the peer connection
@@ -85,17 +86,17 @@ class _HomePageState extends State<HomePage> {
       peerServiceInstance.peer?.addTrack(track, stream);
     });
 
+    await _remoteRenderer.initialize();
+
 
     // Set  up the remote stream renderer
-    peerServiceInstance.peer?.onTrack = (RTCTrackEvent event) async {
-      if (event.streams.isNotEmpty) {
-        await _remoteRenderer.initialize();
-          _remoteRenderer.srcObject = event.streams[0];
+    peerServiceInstance.peer?.onAddStream = (MediaStream event) async {
+      // if (event.streams.isNotEmpty) {
+          _remoteRenderer.srcObject = event;
           setState(() {
-
           });
 
-      }
+
     };
   }
 
