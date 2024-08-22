@@ -42,6 +42,10 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    start();
+  }
+
+  void start(){
     initCamera();
     connectSocket();
     peerServiceInstance.initializePeer();
@@ -77,10 +81,11 @@ class _HomePageState extends State<HomePage> {
 
     // Add tracks from the stream to the peer connection
     stream.getTracks().forEach((track) {
+      print('Track : ${track.id}, ${track.kind} ${track.enabled}');
       peerServiceInstance.peer?.addTrack(track, stream);
     });
 
-    // Set up the remote stream renderer
+    // Set  up the remote stream renderer
     peerServiceInstance.peer?.onTrack = (RTCTrackEvent event) async {
       if (event.streams.isNotEmpty) {
         await _remoteRenderer.initialize();
@@ -92,7 +97,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void connectSocket() async {
-    final url = Uri.parse('ws://192.1.150.112:8082/api/videochat/efd6fea9-fa56-4c01-bbe4-0853e40c1866');
+    final url = Uri.parse('ws://192.168.1.14:8082/api/videochat/ad6bd04f-7656-4b46-9936-dc0583a11d57');
     channel = WebSocketChannel.connect(url);
 
     channel.stream.listen((message) {
@@ -144,19 +149,30 @@ class _HomePageState extends State<HomePage> {
           ),
           Text(recieved),
           SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () async {
-              initCamera();
-              final offer = await peerServiceInstance.getOffer();
-              channel.sink.add(jsonEncode(offer?.toMap()));
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: () async {
+                  channel.sink.close();
+                  start();
+                },
+                child: Text("Reconnect Socket"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  initCamera();
+                  final offer = await peerServiceInstance.getOffer();
+                  channel.sink.add(jsonEncode(offer?.toMap()));
 
-              while (peerServiceInstance.getIceCandidate() != null) {
-                final IceCandidateWrapper localIceCandidate = IceCandidateWrapper(candidate: peerServiceInstance.localIceCandidate);
-                channel.sink.add(jsonEncode(localIceCandidate.toMap()));
-                break;
-              }
-            },
-            child: Text("Start Video Call"),
+                  while (peerServiceInstance.getIceCandidate() != null) {
+                    final IceCandidateWrapper localIceCandidate = IceCandidateWrapper(candidate: peerServiceInstance.localIceCandidate);
+                    channel.sink.add(jsonEncode(localIceCandidate.toMap()));
+                    break;
+                  }
+                },
+                child: Text("Start Video Call"),
+              ),
+            ],
           ),
           Expanded(child: RTCVideoView(_localRenderer)),
           Expanded(child: RTCVideoView(_remoteRenderer))
