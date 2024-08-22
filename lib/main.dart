@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -45,15 +47,11 @@ class _HomePageState extends State<HomePage> {
     // peerServiceInstance.initializePeer();
     connectSocket();
     channel.stream.listen((message) {
-      print("=======================>>>>>>>>>>>>>>>> message recieved");
-      setState(() {
-        recieved = message;
-      });
-      print(message);
-      print(
-          "=======================>>>>>>>>>>>>>>>> ok!!!                                                                              ");
+      messageReceived(message);
+
     });
   }
+
   tryPeer() async {
     await peerServiceInstance.initializePeer();
     print("peer=========>>>>.. $peerServiceInstance");
@@ -80,6 +78,21 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       _localRenderer.srcObject = stream;
     });
+  }
+
+  void messageReceived(dynamic message){
+    print("=======================>>>>>>>>>>>>>>>> message recieved");
+    setState(() {
+      recieved = message;
+    });
+    print(message);
+    print("=======================>>>>>>>>>>>>>>>> ok!!!");
+
+    Map<String, dynamic> decodedMessage= jsonDecode(message) as Map<String, dynamic>;
+    if(message.type == "offer"){
+      peerServiceInstance.getAnswer(decodedMessage as RTCSessionDescription);
+    }
+
   }
 
   @override
@@ -109,12 +122,16 @@ class _HomePageState extends State<HomePage> {
           ),
           ElevatedButton(
               onPressed: () async{
-
                 initCamera();
                 final offer = await peerServiceInstance.getOffer();
                 channel.sink.add(offer?.toMap().toString());
                 // while(peerServiceInstance.localIceCandidate!=null){
+                print(peerServiceInstance.localIceCandidate);
+                while(peerServiceInstance.getIceCandidate() != null){
                   channel.sink. add(peerServiceInstance.localIceCandidate?.toMap().toString());
+                  break;
+                }
+
                 // }
 
               },

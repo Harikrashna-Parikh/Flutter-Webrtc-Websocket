@@ -59,9 +59,9 @@ class PeerService {
 
 
       peer!.onIceCandidate = (RTCIceCandidate candidate) {
-        if(localIceCandidate == null){
+        // if(localIceCandidate == null){
           handleICECandidateEvent(candidate);
-        }
+        // }
 
       };
 
@@ -135,6 +135,10 @@ class PeerService {
       print('Error getting offer: $e');
     }
     return null;
+  }
+
+  RTCIceCandidate? getIceCandidate(){
+    return localIceCandidate;
   }
 }
 
