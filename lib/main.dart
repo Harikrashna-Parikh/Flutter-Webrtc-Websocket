@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:videoconferencing/peer_service.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 void main() {
@@ -32,12 +34,15 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   TextEditingController textEditingController = TextEditingController();
+  final PeerService peerServiceInstance = PeerService();
   late WebSocketChannel channel;
   String recieved = "Waiting ====???????";
   final RTCVideoRenderer _localRenderer = RTCVideoRenderer();
 
   @override
   void initState() {
+    tryPeer();
+    // peerServiceInstance.initializePeer();
     connectSocket();
     channel.stream.listen((message) {
       print("=======================>>>>>>>>>>>>>>>> message recieved");
@@ -48,6 +53,10 @@ class _HomePageState extends State<HomePage> {
       print(
           "=======================>>>>>>>>>>>>>>>> ok!!!                                                                              ");
     });
+  }
+  tryPeer() async {
+    await peerServiceInstance.initializePeer();
+    print("peer=========>>>>.. $peerServiceInstance");
   }
 
   connectSocket() async {
@@ -61,6 +70,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void initCamera() async {
+
     await _localRenderer.initialize();
     MediaStream stream = await navigator.mediaDevices.getUserMedia({
       'video': true,
@@ -98,8 +108,15 @@ class _HomePageState extends State<HomePage> {
             height: 12,
           ),
           ElevatedButton(
-              onPressed: () {
+              onPressed: () async{
+
                 initCamera();
+                final offer = await peerServiceInstance.getOffer();
+                channel.sink.add(offer?.toMap().toString());
+                // while(peerServiceInstance.localIceCandidate!=null){
+                  channel.sink. add(peerServiceInstance.localIceCandidate?.toMap().toString());
+                // }
+
               },
               child: Text("Start Video call")),
         Expanded(child: RTCVideoView(_localRenderer))
