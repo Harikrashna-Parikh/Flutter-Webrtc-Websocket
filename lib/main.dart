@@ -42,18 +42,29 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    _localRenderer.initialize();
+    _remoteRenderer.initialize();
+
     start();
+
+
+
   }
 
   void start(){
     initCamera();
     connectSocket();
+
     peerServiceInstance.initializePeer();
     peerServiceInstance.peer?.onAddStream = (MediaStream stream) {
-      setState(() {
-        _remoteRenderer.srcObject = stream;
-      });
+      _remoteRenderer.srcObject = stream;
     };
+    createOfferForInit();
+      setState(() {
+      });
+
+
+
   }
 
   @override
@@ -66,7 +77,6 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> initCamera() async {
     // Initialize the local renderer
-    await _localRenderer.initialize();
 
     // Get the local media stream (video + audio)
     MediaStream stream = await navigator.mediaDevices.getUserMedia({
@@ -86,7 +96,6 @@ class _HomePageState extends State<HomePage> {
       peerServiceInstance.peer?.addTrack(track, stream);
     });
 
-    await _remoteRenderer.initialize();
 
 
     // Set  up the remote stream renderer
@@ -99,6 +108,41 @@ class _HomePageState extends State<HomePage> {
 
     };
   }
+  void createOfferForInit() async{
+    peerServiceInstance.peer!.onAddStream = (MediaStream mediaStream){
+      _remoteRenderer.srcObject = mediaStream;
+    };
+
+    _localRenderer.srcObject?.getTracks().forEach((track) {
+      peerServiceInstance?.peer?.addTrack(track, _localRenderer.srcObject!);
+    });
+
+    RTCSessionDescription offer = await peerServiceInstance!.peer!.createOffer();
+    await peerServiceInstance!.peer!.setLocalDescription(offer);
+    print('Created offer: $offer');
+    peerServiceInstance!.peer?.onTrack = (RTCTrackEvent event) {
+      print('Got remote track: ${event.streams[0]}');
+
+      event.streams[0].getTracks().forEach((track) {
+        print('Add a track to the remoteStream $track');
+        _remoteRenderer!.srcObject!.addTrack(track);
+      });
+    };
+
+
+  }
+
+  Future<void> joinRoom() async {
+    peerServiceInstance.peer!.onAddStream = (MediaStream mediaStream){
+      _remoteRenderer.srcObject = mediaStream;
+    };
+
+    _localRenderer.srcObject?.getTracks().forEach((track) {
+      peerServiceInstance?.peer?.addTrack(track, _localRenderer.srcObject!);
+    });
+
+
+    }
 
   void connectSocket() async {
     final url = Uri.parse('ws://192.168.1.14:8082/api/videochat/95d5edb9-7c93-48c7-80ca-92915cf9b882');
@@ -122,7 +166,8 @@ class _HomePageState extends State<HomePage> {
         channel.sink.add(jsonEncode(localIceCandidate.toMap()));
         break;
       }
-    } else if (decodedMessage['type'] == "answer") {
+    }
+    else if (decodedMessage['type'] == "answer") {
       final RTCSessionDescription answer = RTCSessionDescription(decodedMessage["sdp"], decodedMessage["type"]);
       peerServiceInstance.peer?.setRemoteDescription(answer);
     } else if (decodedMessage['type'] == "candidate") {
@@ -167,12 +212,16 @@ class _HomePageState extends State<HomePage> {
                   initCamera();
                   final offer = await peerServiceInstance.getOffer();
                   channel.sink.add(jsonEncode(offer?.toMap()));
-
+                  setState(() {
+                  });
+                  // joinRoom();
                   while (peerServiceInstance.getIceCandidate() != null) {
                     final IceCandidateWrapper localIceCandidate = IceCandidateWrapper(candidate: peerServiceInstance.localIceCandidate);
                     channel.sink.add(jsonEncode(localIceCandidate.toMap()));
                     break;
                   }
+                  setState(() {
+                  });
                 },
                 child: Text("Start Video Call"),
               ),
