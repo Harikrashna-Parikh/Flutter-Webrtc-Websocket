@@ -50,9 +50,9 @@ class _HomePageState extends State<HomePage> {
     connectSocket();
     peerServiceInstance.initializePeer();
     peerServiceInstance.peer?.onAddStream = (MediaStream stream) {
-      setState(() {
+      // setState(() {
         _remoteRenderer.srcObject = stream;
-      });
+      // });
     };
   }
 
@@ -88,7 +88,6 @@ class _HomePageState extends State<HomePage> {
 
     await _remoteRenderer.initialize();
 
-
     // Set  up the remote stream renderer
     peerServiceInstance.peer?.onAddStream = (MediaStream event) async {
       // if (event.streams.isNotEmpty) {
@@ -101,7 +100,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void connectSocket() async {
-    final url = Uri.parse('ws://192.168.1.14:8082/api/videochat/95d5edb9-7c93-48c7-80ca-92915cf9b882');
+    final url = Uri.parse('ws://192.168.71.246:8082/api/videochat/95d5edb9-7c93-48c7-80ca-92915cf9b882');
     channel = WebSocketChannel.connect(url);
 
     channel.stream.listen((message) {
@@ -122,10 +121,12 @@ class _HomePageState extends State<HomePage> {
         channel.sink.add(jsonEncode(localIceCandidate.toMap()));
         break;
       }
-    } else if (decodedMessage['type'] == "answer") {
+    }
+    else if (decodedMessage['type'] == "answer") {
       final RTCSessionDescription answer = RTCSessionDescription(decodedMessage["sdp"], decodedMessage["type"]);
-      peerServiceInstance.peer?.setRemoteDescription(answer);
-    } else if (decodedMessage['type'] == "candidate") {
+      await peerServiceInstance.peer?.setRemoteDescription(answer);
+    }
+    else if (decodedMessage['type'] == "candidate") {
       final candidate = RTCIceCandidate(decodedMessage['candidate']['candidate'],
           decodedMessage['candidate']['sdpMid'], decodedMessage['candidate']['sdpMLineIndex']);
       peerServiceInstance.peer?.addCandidate(candidate);
@@ -164,7 +165,7 @@ class _HomePageState extends State<HomePage> {
               ),
               ElevatedButton(
                 onPressed: () async {
-                  initCamera();
+                  await initCamera();
                   final offer = await peerServiceInstance.getOffer();
                   channel.sink.add(jsonEncode(offer?.toMap()));
 
