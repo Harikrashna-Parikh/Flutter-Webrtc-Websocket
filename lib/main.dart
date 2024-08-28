@@ -100,7 +100,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void connectSocket() async {
-    final url = Uri.parse('ws://192.168.71.246:8082/api/videochat/95d5edb9-7c93-48c7-80ca-92915cf9b882');
+      final url = Uri.parse('https://hc.argusservices.in/api/videochat/95d5edb9-7c93-48c7-80ca-92915cf9b882');
     channel = WebSocketChannel.connect(url);
 
     channel.stream.listen((message) {
