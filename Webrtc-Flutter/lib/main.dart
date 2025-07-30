@@ -48,7 +48,6 @@ class _HomePageState extends State<HomePage> {
   void start(){
     initCamera();
     connectSocket();
-    print("fgkjdgj");
     peerServiceInstance.initializePeer();
     peerServiceInstance.peer?.onAddStream = (MediaStream stream) {
       // setState(() {
